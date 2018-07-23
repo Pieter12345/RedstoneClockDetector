@@ -21,7 +21,6 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.Plugin;
 
 public class RedstoneUpdateListener implements Listener {
@@ -86,9 +85,7 @@ public class RedstoneUpdateListener implements Listener {
 		
 		// Check if the block that got updated by this event should be logged.
 		switch(event.getBlock().getType()) {
-		case REDSTONE_COMPARATOR: // This block does not actually exist anymore.
-		case REDSTONE_COMPARATOR_ON: // This block does not actually exist anymore.
-		case REDSTONE_COMPARATOR_OFF: { // All comparators are of this type.
+		case COMPARATOR: {
 //			byte rawData = event.getBlock().getData();
 //			BlockFace frontInputFace = null;
 //			switch(rawData & 3) {
@@ -213,15 +210,8 @@ public class RedstoneUpdateListener implements Listener {
 		boolean moveCanHappen = false;
 		if(dest.firstEmpty() == -1) { // If the inventory is full.
 			for(ItemStack stack : dest.getContents()) {
-				
-				// Get the MaterialData (type and data) of the stacks.
-				MaterialData stackMaterial = stack.getData();
-				MaterialData itemsMaterial = items.getData();
-				
-				// Check if either the MaterialData matches, or if there is no MaterialData and the type matches.
-				boolean materialsMatch = (stackMaterial != null && itemsMaterial != null && stackMaterial.equals(itemsMaterial))
-						|| (stackMaterial == null && itemsMaterial == null && stack.getType().equals(items.getType()));
-				if(materialsMatch && stack.getAmount() + items.getAmount() <= stack.getMaxStackSize()) {
+				if(stack.getType() == items.getType() && stack.getDurability() == items.getDurability()
+						&& stack.getAmount() + items.getAmount() <= stack.getMaxStackSize()) {
 					moveCanHappen = true; // The stack can be added to an existing stack.
 					break;
 				}

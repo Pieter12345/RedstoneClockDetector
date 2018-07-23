@@ -4,6 +4,7 @@ version: 0.2.6-woeshbuild
 
 description: Detects redstone clocks and teleports you to them.
 author: [HWei, Woesh0007]
+api-version: 1.13
 commands:
   rcd:
     aliases: redstoneclockdetector

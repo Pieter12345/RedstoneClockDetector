@@ -60,7 +60,7 @@ public class BreakCommand extends AbstractCommand {
 						loc.getWorld().getName()));
 				return true;
 			}
-			block.setType(Material.SIGN_POST);
+			block.setType(Material.SIGN);
 			Sign s = (Sign) block.getState();
 			s.setLine(0, sender.getName());
 			s.setLine(1, ChatColor.DARK_RED + "broke a");
