@@ -17,12 +17,17 @@ public class StatusCommand extends AbstractCommand {
 		super(usage, perm, children);
 		this.plugin = plugin;
 		PluginDescriptionFile des = plugin.getDescription();
+		String[] authors = des.getAuthors().toArray(new String[0]);
+		String authorString = "";
+		for(String author : authors) {
+			authorString += (authorString.isEmpty() ? author : ", " + author);
+		}
 		this.pluginInfo = String.format(
 				"Version: " + ChatColor.YELLOW + "%s" +
-						ChatColor.WHITE + ", Author: " +
+						ChatColor.WHITE + ", Author" + (authors.length > 0 ? "s" : "") + ": " +
 						ChatColor.YELLOW + "%s",
 						des.getVersion(),
-						des.getAuthors().get(0));
+						authorString);
 	}
 	
 	protected RCDPlugin plugin;

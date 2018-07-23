@@ -1,7 +1,7 @@
 package me.hwei.bukkit.redstoneClockDetector.util;
 
 public class UsageException extends Exception {
-
+	
 	public UsageException(String usage, String message) {
 		this.usage = usage;
 		this.message = message;
@@ -10,14 +10,15 @@ public class UsageException extends Exception {
 	public String getUsage() {
 		return usage;
 	}
-
+	
+	@Override
 	public String getMessage() {
 		return message;
 	}
-
+	
 	private String usage;
 	private String message;
 	
 	private static final long serialVersionUID = 1L;
-
+	
 }

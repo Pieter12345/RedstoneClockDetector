@@ -24,8 +24,7 @@ public class TeleportCommand extends AbstractCommand {
 	protected RCDPlugin plugin;
 	
 	@Override
-	protected boolean execute(CommandSender sender, MatchResult[] data)
-			throws UsageException {
+	protected boolean execute(CommandSender sender, MatchResult[] data) throws UsageException {
 		Player player = sender instanceof Player ? (Player)sender : null;
 		int tpNum = 0;
 		OutputManager outputManager = OutputManager.GetInstance();
@@ -37,11 +36,11 @@ public class TeleportCommand extends AbstractCommand {
 		} else if(data.length == 1) {
 			if(player == null) {
 				String playerName = data[0].getString();
-				player = this.plugin.getServer().getPlayer(playerName);
+				player = this.plugin.getPlayer(playerName);
 				if(player == null) {
 					toSender.output(String.format(
 							"Can not find player " +
-									ChatColor.GREEN + "%d" + ChatColor.WHITE +
+									ChatColor.GREEN + "%s" + ChatColor.WHITE +
 									".", playerName));
 					return true;
 				}
@@ -54,11 +53,11 @@ public class TeleportCommand extends AbstractCommand {
 			}
 		} else if(data.length == 2) {
 			String playerName = data[0].getString();
-			player = this.plugin.getServer().getPlayer(playerName);
+			player = this.plugin.getPlayer(playerName);
 			if(player == null) {
 				toSender.output(String.format(
 						"Can not find player " +
-								ChatColor.GREEN + "%d" + ChatColor.WHITE +
+								ChatColor.GREEN + "%s" + ChatColor.WHITE +
 								".", playerName));
 				return true;
 			}
@@ -86,5 +85,4 @@ public class TeleportCommand extends AbstractCommand {
 		}
 		return true;
 	}
-
 }

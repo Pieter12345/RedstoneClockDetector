@@ -1,12 +1,10 @@
 package me.hwei.bukkit.redstoneClockDetector;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import me.hwei.bukkit.redstoneClockDetector.commands.BreakCommand;
 import me.hwei.bukkit.redstoneClockDetector.commands.ListCommand;
@@ -22,22 +20,27 @@ import me.hwei.bukkit.redstoneClockDetector.util.UsageException;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
+public class RCDPlugin extends JavaPlugin implements CommandExecutor {
+	
+	// Variables & Constants.
+	private RedstoneUpdateListener redstoneUpdateListener = null;
+	private ArrayList<Entry<Location, Integer>> redstoneActivityList = null;
+	private Worker worker = null;
+	private CommandSender sender = null;
+	private int taskId = Integer.MIN_VALUE;
+	private IOutput toConsole = null;
+	private AbstractCommand topCommand = null;
 
 	@Override
 	public void onDisable() {
 		this.stop();
-		this.redstoneActivityTable = null;
+		this.redstoneUpdateListener = null;
 		this.redstoneActivityList = null;
 		this.toConsole.output("Disabled.");
 	}
@@ -59,7 +62,7 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 		OutputManager.IPlayerGetter playerGetter = new OutputManager.IPlayerGetter() {
 			@Override
 			public Player get(String name) {
-				return getServer().getPlayer(name);
+				return getPlayer(name);
 			}
 		};
 		String pluginName = this.getDescription().getName();
@@ -69,14 +72,11 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 		this.toConsole = OutputManager.GetInstance().prefix(toConsole);
 		this.toConsole.output("Enabled.");
 		
-	
-		this.redstoneActivityTable = new HashMap<Location, Integer>();
+		this.redstoneUpdateListener = new RedstoneUpdateListener(this);
 		this.redstoneActivityList = new ArrayList<Entry<Location, Integer>>();
 		this.stop();
 		
 		this.setupCommands();
-		
-		this.getServer().getPluginManager().registerEvents(this, this);
 	}
 	
 	protected boolean setupCommands() {
@@ -139,9 +139,6 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 		}
 		@Override
 		public void run() {
-			
-			
-			
 			if(this.secondsRemain <= 0)
 			{
 				if(RCDPlugin.this.stop() && this.progressReporter != null)
@@ -160,8 +157,10 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 		protected int secondsRemain;
 	}
 	public boolean start(CommandSender sender, int seconds, IProgressReporter progressReporter ) {
-		if(this.taskId != Integer.MIN_VALUE)
+		if(this.taskId != Integer.MIN_VALUE) {
 			return false;
+		}
+		this.redstoneUpdateListener.startListener();
 		this.sender = sender;
 		this.worker = new Worker(seconds, progressReporter);
 		this.taskId = this.getServer().getScheduler().scheduleSyncRepeatingTask(this, this.worker, 0L, 20L);
@@ -174,48 +173,40 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 			this.sender = null;
 			this.worker = null;
 			this.sortList();
-			this.redstoneActivityTable.clear();
+			this.redstoneUpdateListener.getRedstoneActivityTable().clear();
+			this.redstoneUpdateListener.stopListener();
 			return true;
-		} else
-			return false;
+		}
+		return false;
 	}
 	
-	protected void sortList() {
-		class ValueComparator implements Comparator<Location> {
-			Map<Location, Integer> base;
-			public ValueComparator(Map<Location, Integer> base) {
-				this.base = base;
-			}
-			public int compare(Location a, Location b) {
-				if(base.get(a) < base.get(b)) {
+	private void sortList() {
+		this.redstoneActivityList.clear();
+		this.redstoneActivityList.addAll(this.redstoneUpdateListener.getRedstoneActivityTable().entrySet());
+		Collections.sort(this.redstoneActivityList, new Comparator<Entry<Location, Integer>>() {
+			@Override
+			public int compare(Entry<Location, Integer> a, Entry<Location, Integer> b) {
+				if(a.getValue().intValue() < b.getValue().intValue()) {
 					return 1;
-				} else if(base.get(a) == base.get(b)) {
+				} else if(a.getValue().intValue() == b.getValue().intValue()) {
+					// Values are equal, sort by coordinates instead.
+					int[] diffs = new int[] {
+							a.getKey().getBlockX() - b.getKey().getBlockX(),
+							a.getKey().getBlockY() - b.getKey().getBlockY(),
+							a.getKey().getBlockZ() - b.getKey().getBlockZ(),
+							a.getKey().getWorld().getName().compareTo(b.getKey().getWorld().getName())
+						};
+					for(int diff : diffs) {
+						if(diff != 0) {
+							return (diff > 0 ? 1 : -1);
+						}
+					}
 					return 0;
 				} else {
 					return -1;
 				}
 			}
-		}
-		ValueComparator bvc = new ValueComparator(this.redstoneActivityTable);
-		TreeMap<Location, Integer> sortedMap = new TreeMap<Location, Integer>(bvc);
-		sortedMap.putAll(this.redstoneActivityTable);
-		this.redstoneActivityList.clear();
-		this.redstoneActivityList.addAll(sortedMap.entrySet());
-	}
-	
-	@EventHandler
-	public void onBlockRedstoneChange(BlockPhysicsEvent event)  {
-		if(this.taskId == Integer.MIN_VALUE)
-			return;
-		Block block = event.getBlock();
-		if(block.getBlockPower() == 0)
-			return;
-		Location loc = event.getBlock().getLocation();
-		int count = 1;
-		if(this.redstoneActivityTable.containsKey(loc)) {
-			count += this.redstoneActivityTable.get(loc);
-		}
-		this.redstoneActivityTable.put(loc, count);
+		});
 	}
 	
 	@Override
@@ -235,13 +226,16 @@ public class RCDPlugin extends JavaPlugin implements CommandExecutor, Listener {
 		return true;
 	}
 	
-	
-	protected HashMap<Location, Integer> redstoneActivityTable = null;
-	protected List<Entry<Location, Integer>> redstoneActivityList = null;
-	protected Worker worker = null;
-	protected CommandSender sender = null;
-	protected int taskId = Integer.MIN_VALUE;
-	protected String prefex = "";
-	protected IOutput toConsole = null;
-	protected AbstractCommand topCommand = null;
+	public Player getPlayer(String name) {
+		Player player = null;
+		for(Player p : this.getServer().getOnlinePlayers()) {
+			if(p.getName().equalsIgnoreCase(name)) {
+				player = p;
+				if(p.getName().equals(name)) { // Only break on a case-sensitive match since names might not be unique anymore.
+					break;
+				}
+			}
+		}
+		return player;
+	}
 }

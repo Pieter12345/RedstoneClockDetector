@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.hwei</groupId>
-	<version>0.2.6</version>
+	<version>Original 0.2.6 woeshbuild 5</version>
 	<artifactId>redstoneclockdetector</artifactId>
 	<name>RedstoneClockDetector</name>
 	<properties>
@@ -10,10 +10,13 @@
 	</properties>
 	<url>http://dev.bukkit.org/server-mods/redstoneclockdetector</url>
 	<repositories>
-	       <repository>
-			<id>bukkit-repo</id>
-			<url>http://repo.bukkit.org/content/groups/public</url>
+		
+		<!-- Bukkit repo -->
+		<repository>
+			<id>spigot-repo</id>
+			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
 		</repository>
+		
 	</repositories>
 	<build>
 		<finalName>${project.name}</finalName>
@@ -49,11 +52,15 @@
 		</resources>
 	</build>
 	<dependencies>
+		
+		<!-- Bukkit -->
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>bukkit</artifactId>
-			<version>1.2.4-R1.0</version>
+			<version>1.11-R0.1-SNAPSHOT</version>
+			<scope>provided</scope>
 		</dependency>
+		
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
