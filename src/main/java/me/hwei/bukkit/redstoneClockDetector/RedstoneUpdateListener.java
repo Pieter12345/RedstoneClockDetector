@@ -210,7 +210,7 @@ public class RedstoneUpdateListener implements Listener {
 		boolean moveCanHappen = false;
 		if(dest.firstEmpty() == -1) { // If the inventory is full.
 			for(ItemStack stack : dest.getContents()) {
-				if(stack.getType() == items.getType() && stack.getDurability() == items.getDurability()
+				if(stack.getType() == items.getType()
 						&& stack.getAmount() + items.getAmount() <= stack.getMaxStackSize()) {
 					moveCanHappen = true; // The stack can be added to an existing stack.
 					break;
